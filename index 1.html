@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Būk Protingas Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b0f1a; --panel:#141a2a; --line:#24304a; --txt:#e8ecf5; --mut:#8c97b0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:Montserrat, system-ui, sans-serif; font-size:15px; }
+  .wrap { max-width:1000px; margin:0 auto; padding:16px; display:grid; gap:18px; grid-template-columns:minmax(0,1fr); }
+  @media (min-width:900px){ .wrap { grid-template-columns:440px 1fr; align-items:start; } .preview { position:sticky; top:16px; } }
+  h1 { font-size:16px; letter-spacing:3px; text-transform:uppercase; margin:0 0 12px; color:var(--mut); font-weight:600; }
+  canvas { width:100%; height:auto; border-radius:14px; display:block; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .big { width:100%; margin-top:12px; padding:16px; font-size:17px; font-weight:700; border:0; border-radius:12px; cursor:pointer; color:#fff; transition:background .3s; }
+  .big:active { transform:scale(.98); }
+  .fam { display:flex; gap:8px; margin-top:10px; }
+  .fam div { flex:1; text-align:center; padding:8px 0; border-radius:10px; font-size:13px; font-weight:600; border:2px solid transparent; opacity:.45; color:#111; }
+  .fam div.on { opacity:1; border-color:#fff; }
+  .swatches { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .sw { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .sw.on { border-color:#fff; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; }
+  .panel h2 { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--mut); margin:0 0 10px; font-weight:600; }
+  label { display:block; font-size:13px; color:var(--mut); margin:10px 0 4px; }
+  textarea, input[type=text], input[type=number] { width:100%; background:#0d1220; color:var(--txt); border:1px solid var(--line); border-radius:10px; padding:10px; font:inherit; }
+  textarea { min-height:110px; resize:vertical; }
+  .counter { display:flex; gap:6px; }
+  .counter button { width:48px; border-radius:10px; border:1px solid var(--line); background:#0d1220; color:var(--txt); font-size:18px; cursor:pointer; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn { padding:14px; border-radius:12px; border:1px solid var(--line); background:#1c2540; color:var(--txt); font-weight:600; font-size:15px; cursor:pointer; }
+  .btn.primary { background:#1f8f5f; border-color:#1f8f5f; }
+  #resultBox img { width:100%; border-radius:10px; margin-top:8px; }
+  .next { margin-top:12px; padding:10px 12px; border-radius:10px; background:#0d1220; border:1px solid var(--line); font-size:14px; }
+  .next b { color:#fff; }
+  .next.q { border-color:#c9a24a; background:linear-gradient(135deg,#1d1606,#0d1220); }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .hint { font-size:12px; color:var(--mut); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="preview">
+    <h1>Būk Protingas Studio</h1>
+    <canvas id="cv" width="1080" height="1350"></canvas>
+    <button class="big" id="newBtn">🎨 New shade</button>
+    <div class="fam" id="fam">
+      <div data-f="0" style="background:#f2c230">Yellow</div>
+      <div data-f="1" style="background:#f08a2c">Orange</div>
+      <div data-f="2" style="background:#3a8dde">Blue</div>
+      <div data-f="3" style="background:linear-gradient(135deg,#1a1408,#c9a24a);color:#fff">Gold ?</div>
+    </div>
+    <div class="next" id="next"></div>
+    <div class="hint">Every 5th post is automatically a “Pats pagalvok” post (black &amp; gold). Other posts follow yellow → orange → blue by post number, so the grid columns stay the same. “New shade” only changes the tone and rays.</div>
+    <div class="swatches" id="swatches"></div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2 id="textTitle">Lesson</h2>
+      <label for="quote" id="quoteLbl">Quote text (Enter = manual line break)</label>
+      <textarea id="quote">Kramtyk valgydamas, nes kitaip skaudės ryjant.</textarea>
+      <div id="authorBox">
+        <label for="author">Author (optional)</label>
+        <input type="text" id="author" placeholder="pvz. Močiutė, turbūt">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Counters</h2>
+      <div class="grid3">
+        <div><label for="post">Instagram post #</label><input type="number" id="post" min="1" value="1"></div>
+        <div><label for="num">Lesson Nr.</label><input type="number" id="num" min="1" value="1"></div>
+        <div><label for="qnum">Pagalvok Nr.</label><input type="number" id="qnum" min="1" value="1"></div>
+      </div>
+      <div class="hint">“Instagram post #” = position of the next post on your profile (all posts counted). It decides the color and when a “Pats pagalvok” post is due. All counters move on automatically after saving.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Save</h2>
+      <div class="actions">
+        <button class="btn primary" id="dl">⬇ Download PNG</button>
+        <button class="btn" id="share">📤 Share</button>
+      </div>
+      <div class="hint">After saving, the counters move on to the next post automatically.</div>
+      <div id="resultBox" hidden>
+        <div class="hint">On a phone you can also long-press this image → “Save image”.</div>
+        <img id="result" alt="Exported post">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Account (set once)</h2>
+      <label for="label">Post title (shown above the number)</label>
+      <input type="text" id="label" list="labels" value="GYVENIMO PAMOKA">
+      <datalist id="labels">
+        <option value="GYVENIMO PAMOKA"><option value="GYVENIMIŠKA PAMOKA"><option value="BŪK PROTINGAS"><option value="PROTINGA MINTIS">
+      </datalist>
+      <label for="qlabel">“Pats pagalvok” title</label>
+      <input type="text" id="qlabel" value="PATS PAGALVOK">
+      <label for="cta">Line at the bottom of “Pats pagalvok” posts (empty = none)</label>
+      <input type="text" id="cta" value="Rašyk komentaruose 👇">
+      <label for="handle">Your handle, shown on every post</label>
+      <input type="text" id="handle" placeholder="@yourhandle">
+    </div>
+  </div>
+</div>
+
+<script>
+const W = 1080, H = 1350;
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const bg = document.createElement('canvas'); bg.width = W; bg.height = H;
+const bctx = bg.getContext('2d');
+const $ = id => document.getElementById(id);
+// ---------- helpers ----------
+const hsl = (h,s,l,a=1) => `hsla(${((h%360)+360)%360},${s}%,${l}%,${a})`;
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function hslToHex(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))))).toString(16).padStart(2,'0');
+  return '#'+f(0)+f(8)+f(4); }
+const pad3 = n => String(n).padStart(3,'0');
+
+function radial(c,x,y,r,stops){ const g=c.createRadialGradient(x,y,0,x,y,r); stops.forEach(([o,col])=>g.addColorStop(o,col)); c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2); }
+function ellipse(c,x,y,rx,ry,stops){ c.save(); c.translate(x,y); c.scale(1,ry/rx); radial(c,0,0,rx,stops); c.restore(); }
+function ray(c,sx,sy,a,w,len,stops){
+  const ex=sx+Math.cos(a)*len, ey=sy+Math.sin(a)*len;
+  const g=c.createLinearGradient(sx,sy,ex,ey); stops.forEach(([o,col])=>g.addColorStop(o,col));
+  c.fillStyle=g; c.beginPath(); c.moveTo(sx,sy);
+  c.lineTo(sx+Math.cos(a-w)*len, sy+Math.sin(a-w)*len);
+  c.lineTo(sx+Math.cos(a+w)*len, sy+Math.sin(a+w)*len); c.closePath(); c.fill();
+}
+function sparkle(c,r,hue,x,y){
+  const s = Math.pow(r(),3)*4 + 0.7, a = 0.35 + r()*0.6, h = hue + (r()-0.5)*30;
+  if (s > 2.4) radial(c,x,y,s*6,[[0,hsl(h,100,85,a*0.6)],[1,hsl(h,100,70,0)]]);
+  c.fillStyle = hsl(h,100,88,a); c.beginPath(); c.arc(x,y,s,0,Math.PI*2); c.fill();
+}
+function vignette(c,strength=0.6){
+  const g=c.createRadialGradient(W/2,H/2,W*0.35,W/2,H/2,H*0.8);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,`rgba(0,0,0,${strength})`);
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+}
+
+
+const STYLES = {
+  starburst(c,r,hue){
+    const cx=W/2, cy=H*0.5;
+    radial(c,cx,cy,H,[[0,hsl(hue,70,16)],[1,hsl(hue,80,3)]]);
+    c.globalCompositeOperation='lighter';
+    for(let i=0;i<150;i++){
+      const a=r()*Math.PI*2, w=0.003+r()*0.018, len=W*(0.35+r()*0.9), L=55+r()*25, al=0.05+r()*0.14;
+      ray(c,cx,cy,a,w,len,[[0,hsl(hue+(r()-0.5)*25,95,L,al*1.6)],[0.5,hsl(hue,90,L,al*0.5)],[1,hsl(hue,90,L,0)]]);
+    }
+    radial(c,cx,cy,230,[[0,hsl(hue,100,95,0.8)],[0.3,hsl(hue,95,70,0.35)],[1,hsl(hue,90,50,0)]]);
+    for(let i=0;i<180;i++) sparkle(c,r,hue,r()*W,r()*H);
+    c.globalCompositeOperation='source-over'; vignette(c,0.65);
+  },
+};
+
+// ---------- BRAND (fixed) ----------
+const BRAND = {
+  
+  font: { family:'"Playfair Display", Georgia, serif', weight:600, lh:1.25 },
+  text: '#f6f4ef', soft:'rgba(246,244,239,0.8)',
+  families: [                       // blue, orange, golden yellow (no green-ish yellow)
+    { name:'Yellow', hue:[40,47]   },
+    { name:'Orange', hue:[20,30]   },
+    { name:'Blue',   hue:[200,218] }
+  ],
+  scrim: 0.45
+};
+const num  = () => Math.max(1, parseInt($('num').value)||1);
+const qnum = () => Math.max(1, parseInt($('qnum').value)||1);
+const post = () => Math.max(1, parseInt($('post').value)||1);
+const QEVERY = 5;
+const isQ = () => post() % QEVERY === 0;
+const famIdx = () => isQ() ? 3 : (post()-1) % 3;
+const GOLD = 43;
+
+const LS = 'bukProtingas.v1';
+let hist = [], cur = null;
+
+function newShade(){
+  const fi = famIdx(), f = fi===3 ? { hue:[GOLD-3,GOLD+3] } : BRAND.families[fi];
+  cur = { fam: fi, hue: f.hue[0] + Math.random()*(f.hue[1]-f.hue[0]), seed: Math.floor(Math.random()*1e9) };
+  hist.unshift(cur); hist = hist.slice(0,8);
+  drawBg(); ui(); render();
+}
+function ensureFamily(){ if (!cur || cur.fam !== famIdx()) { hist = []; newShade(); } else render(); }
+function drawBg(){
+  bctx.clearRect(0,0,W,H); bctx.globalCompositeOperation='source-over';
+  if (cur.fam === 3) { drawGold(bctx, mulberry32(cur.seed), cur.hue); return; }
+  STYLES.starburst(bctx, mulberry32(cur.seed), cur.hue);
+  if (cur.fam < 2) {               // warm colors: lift so they read as orange/yellow, not brown
+    bctx.globalCompositeOperation='lighter';
+    const g=bctx.createRadialGradient(W/2,H/2,0,W/2,H/2,H*0.75);
+    g.addColorStop(0,hsl(cur.hue,100,50,0.38)); g.addColorStop(0.6,hsl(cur.hue,100,40,0.16)); g.addColorStop(1,hsl(cur.hue,100,30,0.04));
+    bctx.fillStyle=g; bctx.fillRect(0,0,W,H);
+    bctx.globalCompositeOperation='source-over';
+  }
+}
+// "Pats pagalvok": black & gold — dark base, fine metallic rays, gold frame
+function drawGold(c,r,hue){
+  const cx=W/2, cy=H*0.5;
+  radial(c,cx,cy,H,[[0,hsl(hue,35,9)],[0.6,hsl(hue,30,4)],[1,'#000']]);
+  c.globalCompositeOperation='lighter';
+  for(let i=0;i<170;i++){
+    const a=r()*Math.PI*2, w=0.002+r()*0.012, len=W*(0.4+r()*0.9), L=50+r()*25, al=0.04+r()*0.11;
+    ray(c,cx,cy,a,w,len,[[0,hsl(hue+(r()-0.5)*8,80,L,al*1.6)],[0.5,hsl(hue,70,L,al*0.45)],[1,hsl(hue,70,L,0)]]);
+  }
+  radial(c,cx,cy,300,[[0,hsl(hue,90,80,0.55)],[0.35,hsl(hue,85,55,0.25)],[1,hsl(hue,80,40,0)]]);
+  for(let i=0;i<220;i++) sparkle(c,r,hue,r()*W,r()*H);
+  c.globalCompositeOperation='source-over'; vignette(c,0.6);
+  const gg=c.createLinearGradient(0,0,W,H);
+  gg.addColorStop(0,hsl(hue,75,62)); gg.addColorStop(0.5,hsl(hue,90,82)); gg.addColorStop(1,hsl(hue,70,48));
+  c.strokeStyle=gg; c.lineWidth=4; c.strokeRect(44,44,W-88,H-88);
+  c.globalAlpha=0.5; c.lineWidth=1.5; c.strokeRect(58,58,W-116,H-116); c.globalAlpha=1;
+}
+let drafts = {}, curText = 'ltext';
+function updNext(){
+  const q=isQ(), el=$('next');
+  el.className='next'+(q?' q':'');
+  el.innerHTML = q
+    ? `Next: post #${post()} → <b>${($('qlabel').value.trim()||'PATS PAGALVOK').toUpperCase()} Nr. ${pad3(qnum())}</b>`
+    : `Next: post #${post()} → <b>${($('label').value.trim()||'GYVENIMO PAMOKA').toUpperCase()} Nr. ${pad3(num())}</b> · ${BRAND.families[famIdx()].name}`;
+  $('textTitle').textContent = q ? 'Pats pagalvok – question' : 'Lesson';
+  $('quoteLbl').textContent = q ? 'Question text (Enter = manual line break)' : 'Quote text (Enter = manual line break)';
+  $('authorBox').hidden = q;
+  const want = q ? 'qtext' : 'ltext';      // separate draft text for each post type
+  if (curText !== want) { drafts[curText] = $('quote').value; $('quote').value = drafts[want] ?? (q ? 'Ar šaukštas sriubai, ar sriuba šaukštui?' : ''); curText = want; }
+}
+function ui(){
+  updNext();
+  document.querySelectorAll('#fam div').forEach(d=> d.classList.toggle('on', +d.dataset.f === famIdx()));
+  $('newBtn').style.background = `linear-gradient(135deg, ${hslToHex(cur.hue,80,45)}, ${hslToHex(cur.hue,85,30)})`;
+  const box = $('swatches'); box.innerHTML = '';
+  hist.forEach(h=>{
+    const d=document.createElement('div'); d.className='sw'+(h===cur?' on':''); d.style.background=hslToHex(h.hue,85,55);
+    d.onclick=()=>{ cur=h; drawBg(); ui(); render(); }; box.appendChild(d);
+  });
+}
+
+function wrap(c,text,maxW){
+  const out=[];
+  text.split('\n').forEach(p=>{
+    const words=p.split(/\s+/).filter(Boolean); if(!words.length){ out.push(''); return; }
+    let line=words[0];
+    for(let i=1;i<words.length;i++){ const t=line+' '+words[i]; if(c.measureText(t).width<=maxW) line=t; else { out.push(line); line=words[i]; } }
+    out.push(line);
+  });
+  return out;
+}
+const spacing = px => { if ('letterSpacing' in ctx) ctx.letterSpacing = px+'px'; };
+
+let pending=false;
+async function render(){
+  if (pending) return; pending=true;
+  await new Promise(r=>requestAnimationFrame(r)); pending=false;
+  const q = cur.fam === 3;
+  const f = BRAND.font, text = $('quote').value.trim() || ' ', author = q ? '' : $('author').value.trim(), handle = $('handle').value.trim();
+  const cta = q ? $('cta').value.trim() : '';
+  try { await Promise.all([document.fonts.load(`600 60px ${f.family}`, text), document.fonts.load('600 30px Montserrat')]); } catch(e){}
+
+  ctx.globalCompositeOperation='source-over'; ctx.clearRect(0,0,W,H); ctx.drawImage(bg,0,0);
+
+  const maxW=W*0.78, maxH=H*(author?0.46:0.52);
+  let size=140, lines, lh;
+  for(;;){ ctx.font=`${f.weight} ${size}px ${f.family}`; lines=wrap(ctx,text,maxW); lh=size*f.lh;
+    const widest=Math.max(...lines.map(l=>ctx.measureText(l).width));
+    if ((lines.length*lh<=maxH && widest<=maxW) || size<=26) break; size-=2; }
+  const aSize=Math.max(28,Math.min(44,size*0.42)), qm=Math.min(240,size*2.1);
+  const ctaSize=Math.max(30,Math.min(40,size*0.38));
+  const qs=Math.min(190,size*1.6), mark = q ? qs*0.95 : qm*0.45;
+  const blockH=lines.length*lh+(author?aSize*2.2:0)+(cta?ctaSize*2.6:0)+mark, top=Math.max(H/2-blockH/2+mark, q?200+qs*0.9:0);
+
+  // readability shade
+  const rx=W*0.62, ry=Math.max(blockH*0.75,260), s=BRAND.scrim;
+  ctx.save(); ctx.translate(W/2,H/2); ctx.scale(1,ry/rx);
+  const g=ctx.createRadialGradient(0,0,0,0,0,rx); g.addColorStop(0,`rgba(0,0,0,${s})`); g.addColorStop(.55,`rgba(0,0,0,${s*.7})`); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(-rx,-rx,rx*2,rx*2); ctx.restore();
+
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  if (q) {
+    const gy=top-qs*0.5;
+    const gq=ctx.createLinearGradient(0,gy-qs/2,0,gy+qs/2);
+    gq.addColorStop(0,hsl(cur.hue,90,82)); gq.addColorStop(0.5,hsl(cur.hue,85,60)); gq.addColorStop(1,hsl(cur.hue,75,42));
+    ctx.save(); ctx.globalAlpha=.9; ctx.fillStyle=gq; ctx.shadowColor=hsl(cur.hue,90,50,.6); ctx.shadowBlur=30;
+    ctx.font=`600 ${qs}px "Playfair Display", Georgia, serif`; ctx.fillText('?', W/2, gy); ctx.restore();
+  } else {
+    ctx.save(); ctx.globalAlpha=.6; ctx.fillStyle=hsl(cur.hue,85,72); ctx.font=`600 ${qm}px "Playfair Display", Georgia, serif`;
+    ctx.fillText('\u201C', W/2, top-qm*0.12); ctx.restore();
+  }
+
+  ctx.save(); ctx.shadowColor='rgba(0,0,0,.65)'; ctx.shadowBlur=26; ctx.shadowOffsetY=2;
+  ctx.fillStyle=BRAND.text; ctx.font=`${f.weight} ${size}px ${f.family}`; spacing(0);
+  lines.forEach((l,i)=>ctx.fillText(l,W/2,top+lh*i+lh/2));
+  if (author){ ctx.font=`500 ${aSize}px Montserrat, Arial, sans-serif`; spacing(3); ctx.fillStyle=BRAND.soft;
+    ctx.fillText('— '+author, W/2, top+lines.length*lh+aSize*1.4); }
+  if (cta){ ctx.font=`600 ${ctaSize}px Montserrat, Arial, sans-serif`; spacing(2); ctx.fillStyle=hsl(cur.hue,85,72);
+    ctx.fillText(cta, W/2, top+lines.length*lh+ctaSize*1.9); }
+  ctx.restore();
+
+  ctx.save(); ctx.shadowColor='rgba(0,0,0,.65)'; ctx.shadowBlur=12; ctx.fillStyle= q ? hsl(cur.hue,85,72) : BRAND.soft;
+  const title = q ? ($('qlabel').value.trim()||'PATS PAGALVOK').toUpperCase()+'  Nr. '+pad3(qnum())
+                  : ($('label').value.trim()||'GYVENIMO PAMOKA').toUpperCase()+'  Nr. '+pad3(num());
+  ctx.font='600 32px Montserrat, Arial, sans-serif'; spacing(6); ctx.fillText(title, W/2, q?118:100);
+  ctx.globalAlpha=.5; ctx.fillRect(W/2-30,q?150:132,60,2); ctx.globalAlpha=1;
+  if (handle){ ctx.font='500 28px Montserrat, Arial, sans-serif'; spacing(4); ctx.globalAlpha=.85; ctx.fillText(handle, W/2, q?H-100:H-80); }
+  ctx.restore(); spacing(0);
+  save();
+}
+
+// export
+const fileName = () => isQ() ? `pagalvok-${pad3(qnum())}.png` : `pamoka-${pad3(num())}.png`;
+const getBlob = () => new Promise(r=>cv.toBlob(r,'image/png'));
+function afterSave(){
+  if (isQ()) $('qnum').value = qnum()+1; else $('num').value = num()+1;
+  $('post').value = post()+1; ensureFamily(); }
+$('dl').onclick = async ()=>{ await render(); const b=await getBlob(), u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=fileName(); document.body.appendChild(a); a.click(); a.remove();
+  $('result').src=u; $('resultBox').hidden=false; afterSave(); };
+$('share').onclick = async ()=>{ await render(); const b=await getBlob(), file=new File([b],fileName(),{type:'image/png'});
+  if (navigator.canShare && navigator.canShare({files:[file]})) { try{ await navigator.share({files:[file]}); afterSave(); }catch(e){} }
+  else { $('result').src=URL.createObjectURL(b); $('resultBox').hidden=false;
+    alert('Sharing needs https. Long-press the image below to save it, or use Download.'); } };
+
+// persistence
+const KEYS=['author','num','handle','label','post','qnum','qlabel','cta'];
+function save(){ const o={}; KEYS.forEach(k=>o[k]=$(k).value);
+  drafts[curText]=$('quote').value; o.drafts=drafts; o.curText=curText;
+  try{ localStorage.setItem(LS,JSON.stringify(o)); }catch(e){} }
+function load(){ try{ const o=JSON.parse(localStorage.getItem(LS)||'{}');
+  KEYS.forEach(k=>{ if(k in o) $(k).value=o[k]; });
+  if (!('post' in o) && ('num' in o)) $('post').value = o.num;   // upgrade: until now post # = lesson #
+  if (o.drafts) { drafts=o.drafts; curText=o.curText||'ltext'; if (drafts[curText]!=null) $('quote').value = drafts[curText]; }
+  else if ('quote' in o) { $('quote').value=o.quote; }
+}catch(e){} }
+load();
+['quote','author','handle','label','qlabel','cta'].forEach(k=>$(k).addEventListener('input',()=>{ updNext(); render(); }));
+['num','qnum','post'].forEach(k=>$(k).addEventListener('input',ensureFamily));
+$('newBtn').onclick=newShade;
+document.fonts.ready.then(()=>render());
+newShade();
+</script>
+</body>
+</html>
